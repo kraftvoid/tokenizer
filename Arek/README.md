@@ -6,8 +6,8 @@ Byte-level BPE trenowany **od zera w czystym Pythonie** (bez bibliotek). Wszystk
 **Organizacja repo = katalog per rozmiar słownika (`vocab`)** — bo *vocab to główna dźwignia fertility*
 (zmierzone, patrz „Krzywa vocab"). W katalogu warianty: **`slayer-v1`/`slayer-v2`** (SpeakLeash) lub **`lektury-*`** (Wolne Lektury) — patrz „Nazewnictwo".
 
-> **Najlepszy fertility:** [`256000/slayer-v2.json`](256000/slayer-v2.json) — **1,462 tok/słowo**
-> (Rényi 0,370, regex cl100k + pełne cyfry). To Pareto-wybór — tradeoff niżej.
+> **Najniższa fertility:** [`512000/slayer-v2.json`](512000/slayer-v2.json) — **1,424 tok/słowo** (badawczo).
+> **Rekomendacja produkcyjna zależy od modelu** — dla A3B ~128k (koszt głowicy `2·d·V`); 256k to rozsądny Pareto. Patrz „Tradeoff".
 
 ## Struktura (po vocabie)
 
@@ -49,12 +49,13 @@ trzymamy go w metadanej, nie w nazwie: SpeakLeash **5 GB-sample** (shardy 0001-0
 | 64000 | slayer-v2 | 4,39 | 1,619 | 0,431 | ✅ |
 | 128000 | slayer-v2 | 4,67 | 1,524 | 0,398 | ✅ |
 | **256000** | **slayer-v2** | **4,87** | **1,462** | 0,370 | ✅ |
+| 512000 | slayer-v2 (bad.) | 5,00 | 1,424 | 0,347 | ✅ |
 
-**Vocab dominuje.** 32k→64k→128k→256k (slayer-v2): fertility **1,756 → 1,619 → 1,524 → 1,462**. Dla kontrastu:
+**Vocab dominuje.** 32k→…→512k (slayer-v2): fertility **1,756 → 1,619 → 1,524 → 1,462 → 1,424**. Dla kontrastu:
 zmiana pre-toka (regex GPT-2→cl100k) daje ~**−0,01**, a **6× więcej danych 0,00** (saturacja — patrz „Skala
-danych"). **Diminishing returns:** zysk na podwojenie vocab maleje (**−0,137 → −0,095 → −0,062**). Ogon wciąż
-**zdrowy** (`best_c`: 128k ≈507, 256k ≈159 → 4,14 GB starcza nawet na 256k; próg glitcha ~512k+, gdzie dopiero
-17 GB danych stanie się lewarem).
+danych"). **Diminishing returns:** zysk na podwojenie vocab maleje (**−0,137 → −0,095 → −0,062 → −0,038**). Ogon
+wciąż **zdrowy** (`best_c`: 128k ≈507, 256k ≈159, 512k ≈47 — nie glitch → 4,14 GB starcza nawet na 512k;
+próg glitcha dopiero ~1M+, gdzie 17 GB danych wreszcie stanie się lewarem).
 
 **Tradeoff — koszt głowicy (nie darmowe).** Większy vocab → **Rényi ↓** (0,451→0,370) oraz **głowica LM
 `2·d·V`/token rośnie liniowo**. Kluczowe: dla **małego modelu** koszt/słowo (fertility × compute/token)
@@ -64,7 +65,7 @@ danych"). **Diminishing returns:** zysk na podwojenie vocab maleje (**−0,137 �
 |---|---|---|---|---|
 | 128k | 1,524 | 0,54 G | ~9% | **9,14 G** |
 | 256k | 1,462 | 1,07 G | ~17% | 9,55 G |
-| 512k | ~1,42 | 2,15 G | ~30% | ~10,8 G |
+| 512k | 1,424 | 2,15 G | ~30% | 10,8 G |
 
 **Dla modelu A3B (d=2048) compute-optimum ≈ 128k**; 256k to Pareto (krótszy kontekst za większą głowicę).
 Duży vocab opłaca się dopiero przy dużym modelu — albo z **adaptive softmax** (ogon w niższym wymiarze;
